@@ -1,0 +1,20 @@
+[Dataset Público >50k]
+        |
+        v
++-----------------------+      +-----------------------+
+| MÓDULO B: Pipeline ML |      | MÓDULO C: Deep Learn. |
+| (Predicción Demanda)  | ---> | (Red Neuronal)        |
++-----------------------+      +-----------------------+
+        |                              |
+        v                              v
++-----------------------+      +-----------------------+
+| MÓDULO A: Agente/CSP  |      | MÓDULO D: NLP/LLM     |
+| (Rutas de Inventario) |      | (Reporte Generado)    |
++-----------------------+      +-----------------------+
+        \                              /
+         \                            /
+          v                          v
+      +-----------------------------------+
+      | MÓDULO E: Integración y Ética     |
+      | (Pipeline Final y Análisis Sesgo) |
+      +-----------------------------------+
