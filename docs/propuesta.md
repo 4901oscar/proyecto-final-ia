@@ -9,6 +9,6 @@ Las empresas enfrentan pérdidas significativas debido al exceso de inventario (
 ## Justificación del Dataset
 Para cumplir con el requisito de más de 50,000 registros para los modelos de ML/DL, utilizaremos el dataset [Nombre del Dataset, ej. "Retail Store Sales Transactions"] disponible de forma pública.
 
-* **URL:** [Inserta el link de Kaggle o UCI]
+* **URL:** https://www.kaggle.com/datasets/noir1112/retail-sales-data
 * **Tamaño:** [Ej. 100,000+ registros, 15 MB]
 * **Columnas Clave:** `Date`, `Store_ID`, `Product_ID`, `Sales_Volume`, `Price`, `Promotion_Flag`.
