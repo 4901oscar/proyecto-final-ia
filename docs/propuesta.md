@@ -4,11 +4,10 @@
 Retail / Logística.
 
 ## Problema Concreto
-Las empresas enfrentan pérdidas significativas debido al exceso de inventario (costos de almacenamiento) o la falta de stock (pérdida de ventas). El problema consiste en predecir la demanda futura de productos basándose en el histórico de ventas y, simultáneamente, optimizar la ruta de reabastecimiento o logística interna para minimizar los costos operativos. 
+Las empresas enfrentan pérdidas operativas por ineficiencias en el manejo de inventario. El sistema inteligente predecirá la demanda futura de productos basándose en el histórico de ventas (ML/DL) y, simultáneamente, el agente optimizará las rutas físicas de recolección de productos en el almacén para minimizar tiempos y costos (Búsqueda/CSP).
 
 ## Justificación del Dataset
-Para cumplir con el requisito de más de 50,000 registros para los modelos de ML/DL, utilizaremos el dataset [Nombre del Dataset, ej. "Retail Store Sales Transactions"] disponible de forma pública.
-
+Para cumplir con el requisito de utilizar un dataset público con más de 50,000 registros para las fases de ML/DL, seleccionamos el "Retail Sales Data".
 * **URL:** https://www.kaggle.com/datasets/noir1112/retail-sales-data
-* **Tamaño:** [Ej. 100,000+ registros, 15 MB]
-* **Columnas Clave:** `Date`, `Store_ID`, `Product_ID`, `Sales_Volume`, `Price`, `Promotion_Flag`.
+* **Tamaño:** 100,000 registros de transacciones comerciales.
+* **Columnas Clave:** Transaction_ID, Date, Customer_ID, Product_Category, Amount.
