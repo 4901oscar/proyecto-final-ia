@@ -2,74 +2,74 @@
 
 ## Objetivo
 
-Este documento explica de principio a fin como opera el modulo C (Deep Learning), cuales son sus entradas y salidas, y como se conecta con los modulos A, B, D y E.
+Explicar de principio a fin la operacion del modulo C (Deep Learning), identificar entradas y salidas, y detallar la interaccion con los modulos A, B, D y E.
 
 ## 1) Entradas del modulo C
 
-El modulo C recibe dos tipos de entradas:
+Recibir los siguientes tipos de entrada:
 
-1. Dataset transaccional procesado por el pipeline de datos.
-   Campos minimos esperados:
+1. Recibir dataset transaccional procesado por el pipeline de datos.
+   Considerar como campos minimos esperados:
 
 - Date_of_Sale
 - Product_Category
 - Sales_Amount
 
-2. Features tabulares para red densa (desde preprocessing/modulo B):
+2. Recibir features tabulares para red densa (desde preprocessing/modulo B):
 
 - Mes
 - DiaSemana
 - Categoria_Codificada
 
-3. Serie temporal de demanda (para LSTM):
+3. Recibir serie temporal de demanda (para LSTM):
 
 - Vector unidimensional con DemandaTotal ordenada por tiempo.
 
 ## 2) Transformaciones internas del modulo C
 
-Flujo interno implementado:
+Ejecutar el siguiente flujo interno:
 
-1. Escalado de datos
+1. Realizar escalado de datos
 
 - MinMaxScaler para X y y en la red densa.
 - MinMaxScaler para la serie en LSTM.
 
-2. Red neuronal densa
+2. Entrenar red neuronal densa
 
 - Entrada: matriz tabular (n_muestras, n_features).
 - Arquitectura: Dense + BatchNorm + Dropout + Dense final lineal.
 - Salida: prediccion de demanda en escala original.
 
-3. Red LSTM
+3. Entrenar red LSTM
 
 - Entrada: secuencias (n_muestras, ventana_temporal, 1).
 - Se crean secuencias con ventana temporal (por defecto 7).
 - Split temporal train/test sin barajado para respetar serie.
 - Salida: prediccion de demanda en escala original.
 
-4. Evaluacion
+4. Ejecutar evaluacion
 
 - Metricas: MSE, MAE, RMSE, R2.
 - La evaluacion de LSTM usa su propio bloque de validacion/prueba almacenado.
 
-5. Ensemble (opcional)
+5. Aplicar ensemble (opcional)
 
 - Combina salida de red densa y LSTM cuando se proporcionan secuencias LSTM en inferencia.
 
 ## 3) Salidas del modulo C
 
-1. Modelos entrenados:
+1. Generar modelos entrenados:
 
 - RedNeuronalDensa
 - RedLSTM
 
-2. Predicciones:
+2. Generar predicciones:
 
 - Prediccion tabular (red densa).
 - Prediccion temporal (LSTM).
 - Prediccion combinada (ensemble, opcional).
 
-3. Metricas de desempeno:
+3. Reportar metricas de desempeno:
 
 - MSE
 - MAE
@@ -78,31 +78,31 @@ Flujo interno implementado:
 
 ## 4) Interaccion con modulos A, B, D y E
 
-Segun arquitectura del proyecto:
+Definir interacciones segun la arquitectura del proyecto:
 
-1. Modulo B -> Modulo C
+1. Conectar Modulo B -> Modulo C
 
 - B entrega dataset transformado y features de demanda.
 - C consume esas features y entrena red densa/LSTM.
 
-2. Modulo C -> Modulo A
+2. Conectar Modulo C -> Modulo A
 
 - C entrega pronostico de demanda por categoria/periodo.
 - A usa esa demanda pronosticada para priorizar rutas de recoleccion con busqueda/CSP.
 
-3. Modulo C -> Modulo D
+3. Conectar Modulo C -> Modulo D
 
 - C entrega resultados y metricas.
 - D genera resumen/reportes en lenguaje natural para stakeholders.
 
-4. Modulo C -> Modulo E
+4. Conectar Modulo C -> Modulo E
 
 - C entrega modelos, predicciones y metricas para integracion.
 - E centraliza pipeline final y revisa sesgos/etica sobre predicciones.
 
 ## 5) Diagrama de procesos sugerido (vista general)
 
-Puedes copiar este bloque en Mermaid Live Editor o en Markdown compatible:
+Copiar este bloque en Mermaid Live Editor o en Markdown compatible:
 
 ```mermaid
 flowchart LR
@@ -121,16 +121,16 @@ flowchart LR
     A --> E
 ```
 
-## 6) Guia paso a paso para construir tu diagrama final
+## 6) Guia paso a paso para construir el diagrama final
 
-1. Define alcance del diagrama: extremo a extremo (datos -> decision).
-2. Dibuja primero los bloques A, B, C, D y E.
-3. Agrega entradas de C:
+1. Definir alcance del diagrama: extremo a extremo (datos -> decision).
+2. Dibujar primero los bloques A, B, C, D y E.
+3. Agregar entradas de C:
 
 - features tabulares
 - serie temporal de demanda
 
-4. Agrega procesos internos de C:
+4. Agregar procesos internos de C:
 
 - escalado
 - entrenamiento densa
@@ -138,18 +138,18 @@ flowchart LR
 - evaluacion
 - ensemble opcional
 
-5. Agrega salidas de C:
+5. Agregar salidas de C:
 
 - predicciones
 - metricas
 - modelos entrenados
 
-6. Conecta C con A, D y E segun las dependencias anteriores.
-7. Valida con el equipo que cada flecha tenga contrato de datos claro.
+6. Conectar C con A, D y E segun las dependencias anteriores.
+7. Validar con el equipo que cada flecha tenga contrato de datos claro.
 
 ## 7) Contratos de datos recomendados para documentar
 
-Para cada flecha del diagrama, agrega:
+Para cada flecha del diagrama, documentar:
 
 - Nombre del payload
 - Formato (DataFrame, vector, JSON)
