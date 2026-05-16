@@ -1,3 +1,4 @@
+#documentador de errores comunes que pueden ocurrir en el análisis de sentimientos y generación de resúmenes
 failure_cases = [
     {
         "text": "Este producto está mortal",
