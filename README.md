@@ -24,45 +24,56 @@ Sistema de IA que combina búsqueda heurística (A\*), Machine Learning, Deep Le
 ## Arquitectura del Sistema
 
 ```
-┌─────────────────────────────────────────────────┐
-│         Retail Sales Data (100,000 registros)   │
-│         Kaggle: noir1112/retail-sales-data       │
-└────────────────────────┬────────────────────────┘
+┌──────────────────────────────────────────────────┐
+│      Retail Sales Data (100,000 registros)       │
+│      Kaggle: noir1112/retail-sales-data          │
+└────────────────────────┬─────────────────────────┘
                          │
-           ┌─────────────┴──────────────┐
-           │                            │
-           ▼                            ▼
-┌──────────────────────┐   ┌────────────────────────┐
-│  MÓDULO B — ML       │   │  MÓDULO C — Deep Learn  │
-│  Predicción Demanda  │   │  Redes Neuronales con   │
-│  · LinearRegression  │   │  sklearn MLPRegressor   │
-│  · RandomForest      │   │  · RedNeuronalDensa     │
-│  Features: Mes,      │   │  · RedLSTM (temporal)   │
-│  DiaSemana, Categoría│   │  · EnsembleRedNeuronal  │
-└──────────┬───────────┘   └────────────┬────────────┘
-           │                            │
-           └──────────┬─────────────────┘
-                      │  Predicción de demanda
-           ┌──────────┴──────────────────────────────┐
-           │                                          │
-           ▼                                          ▼
-┌─────────────────────────┐     ┌──────────────────────────┐
-│  MÓDULO A — Búsqueda A* │     │  MÓDULO D — NLP / LLM    │
-│  Optimización de rutas  │     │  · Análisis de sentimiento│
-│  de recolección en      │     │    (BERT multilingüe)     │
-│  almacén con heurística │     │  · Resumen automático de  │
-│  Manhattan              │     │    reportes de ventas     │
-└────────────┬────────────┘     └─────────────┬────────────┘
-             │                                │
-             └──────────────┬─────────────────┘
-                            │
-                            ▼
-          ┌─────────────────────────────────────┐
-          │  MÓDULO E — Integración y Ética      │
-          │  · Pipeline completo (pipeline.py)   │
-          │  · Análisis de sesgo por subgrupo    │
-          │  · Documentación y README            │
-          └─────────────────────────────────────┘
+                         ▼
+          ┌──────────────────────────┐
+          │  MÓDULO B — ML           │
+          │  Preprocesamiento y      │
+          │  Predicción de Demanda   │
+          │  · ProcesadorDemanda     │
+          │  · LinearRegression      │
+          │  · RandomForest          │
+          │  Features: Mes,          │
+          │  DiaSemana, Categoría    │
+          └────────────┬─────────────┘
+                       │  datos procesados +
+                       │  predicciones ML
+                       ▼
+          ┌──────────────────────────┐
+          │  MÓDULO C — Deep Learn   │
+          │  Redes Neuronales        │
+          │  · RedNeuronalDensa      │
+          │  · RedLSTM (temporal)    │
+          │  · EnsembleRedNeuronal   │
+          │  (sklearn MLPRegressor)  │
+          └────────────┬─────────────┘
+                       │  predicción de demanda
+                       │  (ML + DL combinados)
+           ┌───────────┴───────────────┐
+           │                           │
+           ▼                           ▼
+┌──────────────────────┐  ┌────────────────────────┐
+│  MÓDULO A — A*       │  │  MÓDULO D — NLP / LLM  │
+│  Optimización rutas  │  │  · Resumen automático  │
+│  en almacén (grid    │  │  · Sentimiento BERT    │
+│  8×8, heurística     │  │    multilingüe         │
+│  Manhattan)          │  │  · FastAPI endpoint    │
+└──────────┬───────────┘  └────────────┬───────────┘
+           │                           │
+           └─────────────┬─────────────┘
+                         │
+                         ▼
+          ┌──────────────────────────────────┐
+          │  MÓDULO E — Integración y Ética  │
+          │  · Pipeline completo             │
+          │  · Análisis fairness (género,    │
+          │    edad, MAE diferencial)        │
+          │  · Reporte ejecutivo             │
+          └──────────────────────────────────┘
 ```
 
 ### Flujo de Datos (Pipeline Completo)
