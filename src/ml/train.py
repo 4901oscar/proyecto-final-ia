@@ -3,7 +3,11 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
-from deep_learning import RedNeuronalDensa, RedLSTM, EnsembleRedNeuronal
+try:
+    from ml.deep_learning import RedNeuronalDensa, RedLSTM, EnsembleRedNeuronal
+    _DL_DISPONIBLE = True
+except ImportError:
+    _DL_DISPONIBLE = False
 
 class EntrenadorDemanda:
     def __init__(self, datos: pd.DataFrame, caracteristicas: list, objetivo: str):
@@ -34,7 +38,7 @@ class EntrenadorDemanda:
             modelos_entrenados[nombre] = modelo
         
         # Entrenar modelos DL si se solicita
-        if incluir_dl:
+        if incluir_dl and _DL_DISPONIBLE:
             print("\n=== Entrenando Modelos de Deep Learning ===")
             
             # Red Neuronal Densa

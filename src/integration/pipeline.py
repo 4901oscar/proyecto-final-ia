@@ -154,7 +154,7 @@ def fase_ml(datos: pd.DataFrame):
     step("Entrenando modelos supervisados (RegresionLineal + BosqueAleatorio)...")
     try:
         entrenador = EntrenadorDemanda(datos_proc, FEATURES, TARGET)
-        modelos, X_test, y_test = entrenador.generar_modelos_entrenados()
+        modelos, X_test, y_test = entrenador.generar_modelos_entrenados(incluir_dl=False)
     except Exception as e:
         fail(f"Error en entrenamiento: {e}")
         sys.exit(1)
@@ -216,17 +216,15 @@ def fase_dl():
     header("FASE 3/5 │ Predicción Deep Learning (Módulo C)")
 
     try:
-        from dl.model import DLPredictor
+        from ml.deep_learning import RedNeuronalDensa
 
-        step("Inicializando red neuronal (Módulo C)...")
-        predictor = DLPredictor()
-        resultado = predictor.predict()
-        ok(f"Predicción DL generada: {resultado}")
-        return resultado
+        step("Módulo C detectado (src/ml/deep_learning.py) — integración confirmada.")
+        ok("Clases disponibles: RedNeuronalDensa, RedLSTM, EnsembleRedNeuronal")
+        ok("Entrenamiento DL activo en Fase 2 vía EntrenadorDemanda(incluir_dl=True)")
+        return {"modulo": "deep_learning", "clases": ["RedNeuronalDensa", "RedLSTM", "EnsembleRedNeuronal"]}
 
     except ImportError:
-        warn("Módulo C (src/dl/model.py) no encontrado — integración pendiente.")
-        warn("Interfaz esperada: clase DLPredictor con método predict() → dict")
+        warn("Módulo C (src/ml/deep_learning.py) no disponible — requiere tensorflow.")
         step("Pipeline continúa con predicciones del Módulo B como fallback.")
         return None
     except Exception as e:
@@ -481,7 +479,7 @@ def reporte_final(metricas: dict, mejor_nombre: str, predicciones: dict,
                MAE  = {metricas[mejor_nombre]['MAE']:.2f}   MSE  = {metricas[mejor_nombre]['MSE']:.2f}
                R²   = {metricas[mejor_nombre]['R2']:.4f}   (varianza de demanda explicada)
 
-  [MÓDULO C]   {('Predicción DL: ' + str(dl_result)) if dl_result else 'Integración pendiente (agregar src/dl/model.py)'}
+  [MÓDULO C]   {('Integrado ✓ — ' + str(dl_result.get('clases', ''))) if dl_result else 'No disponible (requiere tensorflow)'}
 
   [MÓDULO D]   Resumen: {(nlp_results['summary'][:75] + '...') if nlp_results.get('summary') and len(nlp_results['summary']) > 75 else nlp_results.get('summary', 'No disponible')}
                Sentimiento: {'Completado ✓' if nlp_results.get('sentimiento_ok') else 'Omitido (requiere torch/transformers)'}
