@@ -1,0 +1,24 @@
+Deap Learning
+Resumen
+	****Entradas -Datos históricos procesados
+		****Proceso -Pasan por dos redes neuronales
+				***** Salida - Predicción demanda
+
+Entradas
+	- Dataset del módulo B, ventas categoriaProduct/fecha/monto
+	- Características Tabulares transformados en formato numerico dia/semana/categoría
+	- Serie temporal, lista de demanda histórica ordenada cronológicamente de fin a 	inicio, para que la IA entienda en comportamiento del tiempo
+
+Proceso
+	- escala los datos: herramienta MinMaxScaler crea rangos de 0 a 1 	
+	- Entrenar una Red Densa, analiza los datos de contexto(días de la semana o meses)
+	para predecir la demanda basándose en patrones fijos
+	- Se entrena una RED LSTM (memoria corto y largo plazo) analiza la secuencia del 	tiempo usando ventanas de 7 días hacia atrás para predecir
+	- Evaluación, calcula métricas matemáticamente, se verifica que el modelo este 	aprendiendo
+
+
+Salidas
+	- Predicciones de demanda (red densa y LSTM).
+	- Tablas de resultados para integración con otros módulos.
+	-Métricas de desempeño (MSE, MAE, RMSE, R²).
+	archivo del modelo entrenado en .keras o .h5 si se decide persistirlo.

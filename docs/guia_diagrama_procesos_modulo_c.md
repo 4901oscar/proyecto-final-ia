@@ -83,6 +83,8 @@ Definir interacciones segun la arquitectura del proyecto:
 1. Conectar Modulo B -> Modulo C
 
 - B entrega dataset transformado y features de demanda.
+- B entregar el DataFrame ya transformado en memoria.
+- C consumir ese DataFrame o continuar con sus propias transformaciones.
 - C consume esas features y entrena red densa/LSTM.
 
 2. Conectar Modulo C -> Modulo A
@@ -163,6 +165,13 @@ Ejemplo rapido C -> A:
 - Formato: DataFrame
 - Campos: fecha, categoria, demanda_predicha
 - Uso en A: priorizar picking y plan de ruta
+
+Ejemplo rapido B -> C:
+
+- Payload: demanda_procesada
+- Formato: DataFrame en memoria
+- Campos: Date_of_Sale, Product_Category, Mes, DiaSemana, DemandaTotal, Categoria_Codificada
+- Uso en C: entrenar red densa y construir secuencias para LSTM
 
 ## 8) Referencias de implementacion (codigo actual)
 
