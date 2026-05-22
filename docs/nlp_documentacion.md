@@ -16,7 +16,6 @@ nlp/
 ├── summary_generator.py    # Generación de resúmenes de ventas
 ├── evaluator.py            # Casos de fallo / evaluación del modelo
 ├── requirements.txt        # Dependencias del proyecto
-└── README.md               # Documentación original
 ```
 
 ---
