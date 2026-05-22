@@ -18,6 +18,33 @@ nlp/
 ├── requirements.txt        # Dependencias del proyecto
 ```
 
+## Diagrama de flujo- NLP
+```mermaid
+flowchart TD
+    A["Texto manual\nJSON: { texto: '...' }"]:::blue
+    B["Deep Learning\nventas, categoría, crecimiento"]:::teal
+
+    A -->|"POST /analyze"| C
+    B -->|"POST /generate-summary"| C
+
+    C["app.py\nFastAPI — orquesta el flujo"]:::purple
+
+    C --> D["preprocess.py\nNLTK — tokenización y stopwords"]:::blue
+    C --> E["sentiment.py\nBERT multilingüe · HuggingFace"]:::blue
+    C --> F["summary_generator.py\nGenera texto de tendencia"]:::teal
+    C -.->|"GET /evaluation"| G["evaluator.py\nCasos de fallo documentados"]:::coral
+
+    D --> R1["Respuesta /analyze\ntokens: palabra1, palabra2...\nsentimiento: { label, score }"]:::blue
+    E --> R1
+    F --> R2["Respuesta /generate-summary\nsummary: La categoría X registró ventas..."]:::teal
+
+    classDef blue   fill:#E6F1FB,stroke:#378ADD,color:#0C447C
+    classDef teal   fill:#E1F5EE,stroke:#1D9E75,color:#085041
+    classDef purple fill:#EEEDFE,stroke:#7F77DD,color:#3C3489
+    classDef coral  fill:#FAECE7,stroke:#D85A30,color:#712B13
+```
+
+
 ---
 
 ## Endpoints de la API
