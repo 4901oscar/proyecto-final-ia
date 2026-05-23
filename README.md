@@ -5,6 +5,8 @@ Universidad / Curso de IA | 2026
 
 Sistema de IA que combina búsqueda heurística (A\*), Machine Learning, Deep Learning y NLP para predecir la demanda de productos y optimizar las rutas de reabastecimiento en un almacén de retail.
 
+> **Estado actual:** Todos los módulos integrados y funcionales. Pipeline completo ejecutable con un solo comando.
+
 ---
 
 ## Preguntas de Negocio que Resuelve este Sistema
@@ -15,70 +17,99 @@ Sistema de IA que combina búsqueda heurística (A\*), Machine Learning, Deep Le
 | 2 | ¿En qué orden debe recorrer el almacén el operario para minimizar tiempo de reabastecimiento? | A (Búsqueda) | A\* con distancia Manhattan genera la ruta óptima entre estantes según prioridad de demanda |
 | 3 | ¿Qué piensan los clientes de los productos con mayor rotación? | D (NLP) | BERT multilingüe clasifica el sentimiento de reseñas y genera resúmenes automáticos |
 | 4 | ¿El modelo trata igual a todos los segmentos de clientes? | E (Ética) | Análisis de MAE diferencial por subgrupo demográfico (ver `docs/ethics_analysis.md`) |
-| 5 | ¿Pueden combinarse las predicciones de ML y DL para mayor precisión? | C + E | Pipeline de integración combina ambas predicciones cuando el Módulo C está disponible |
+| 5 | ¿Pueden combinarse las predicciones de ML y DL para mayor precisión? | C + E | Pipeline de integración combina predicciones ML (Fase 2) con redes neuronales DL (Fase 3) usando `RedNeuronalDensa` y `RedLSTM` |
 
 ---
 
 ## Arquitectura del Sistema
 
 ```
-┌─────────────────────────────────────────────────┐
-│         Retail Sales Data (100,000 registros)   │
-│         Kaggle: noir1112/retail-sales-data       │
-└────────────────────────┬────────────────────────┘
+┌──────────────────────────────────────────────────┐
+│      Retail Sales Data (100,000 registros)       │
+│      Kaggle: noir1112/retail-sales-data          │
+└────────────────────────┬─────────────────────────┘
                          │
-           ┌─────────────┴──────────────┐
-           │                            │
-           ▼                            ▼
-┌──────────────────────┐   ┌────────────────────────┐
-│  MÓDULO B — ML       │   │  MÓDULO C — Deep Learn  │
-│  Predicción Demanda  │   │  Red Neuronal (PyTorch/ │
-│  · LinearRegression  │   │  TensorFlow) para ventas│
-│  · RandomForest      │   │  avanzadas              │
-│  Features: Mes,      │   │  (integración pendiente)│
-│  DiaSemana, Categoría│   │                         │
-└──────────┬───────────┘   └────────────┬────────────┘
-           │                            │
-           └──────────┬─────────────────┘
-                      │  Predicción de demanda
-           ┌──────────┴──────────────────────────────┐
-           │                                          │
-           ▼                                          ▼
-┌─────────────────────────┐     ┌──────────────────────────┐
-│  MÓDULO A — Búsqueda A* │     │  MÓDULO D — NLP / LLM    │
-│  Optimización de rutas  │     │  · Análisis de sentimiento│
-│  de recolección en      │     │    (BERT multilingüe)     │
-│  almacén con heurística │     │  · Resumen automático de  │
-│  Manhattan              │     │    reportes de ventas     │
-└────────────┬────────────┘     └─────────────┬────────────┘
-             │                                │
-             └──────────────┬─────────────────┘
-                            │
-                            ▼
-          ┌─────────────────────────────────────┐
-          │  MÓDULO E — Integración y Ética      │
-          │  · Pipeline completo (pipeline.py)   │
-          │  · Análisis de sesgo por subgrupo    │
-          │  · Documentación y README            │
-          └─────────────────────────────────────┘
+                         ▼
+          ┌──────────────────────────┐
+          │  MÓDULO B — ML           │
+          │  Preprocesamiento y      │
+          │  Predicción de Demanda   │
+          │  · ProcesadorDemanda     │
+          │  · LinearRegression      │
+          │  · RandomForest          │
+          │  Features: Mes,          │
+          │  DiaSemana, Categoría    │
+          └────────────┬─────────────┘
+                       │  datos procesados +
+                       │  predicciones ML
+                       ▼
+          ┌──────────────────────────┐
+          │  MÓDULO C — Deep Learn   │
+          │  Redes Neuronales        │
+          │  · RedNeuronalDensa      │
+          │  · RedLSTM (temporal)    │
+          │  · EnsembleRedNeuronal   │
+          │  (sklearn MLPRegressor)  │
+          └────────────┬─────────────┘
+                       │  predicción de demanda
+                       │  (ML + DL combinados)
+           ┌───────────┴───────────────┐
+           │                           │
+           ▼                           ▼
+┌──────────────────────┐  ┌────────────────────────┐
+│  MÓDULO A — A*       │  │  MÓDULO D — NLP / LLM  │
+│  Optimización rutas  │  │  · Resumen automático  │
+│  en almacén (grid    │  │  · Sentimiento BERT    │
+│  8×8, heurística     │  │    multilingüe         │
+│  Manhattan)          │  │  · FastAPI endpoint    │
+└──────────┬───────────┘  └────────────┬───────────┘
+           │                           │
+           └─────────────┬─────────────┘
+                         │
+                         ▼
+          ┌──────────────────────────────────┐
+          │  MÓDULO E — Integración y Ética  │
+          │  · Pipeline completo             │
+          │  · Análisis fairness (género,    │
+          │    edad, MAE diferencial)        │
+          │  · Reporte ejecutivo             │
+          └──────────────────────────────────┘
 ```
 
-### Flujo de Datos
+### Flujo de Datos (Pipeline Completo)
 
 ```
-CSV → load_data.py → ProcesadorDemanda → EntrenadorDemanda → EvaluadorModelos
-                                                    ↓
-                            predicciones por categoría (DemandaTotal)
-                                                    ↓
-                     ┌──────────────────────────────┤
-                     ↓                              ↓
-            generate_sales_summary()       WarehouseEnvironment + a_star_search()
-            analyze_sentiment()            → Ruta óptima de recolección
-                     ↓                              ↓
-              Reporte NLP                   Recorrido en celdas del almacén
-                     └──────────────────────────────┘
-                                        ↓
-                              Reporte ejecutivo final
+Retail_Sales_Data.csv (100k registros)
+         │
+         ▼
+[FASE 1] load_data.py → RepositorioVentas
+         │  Valida nulos, detecta categorías
+         ▼
+[FASE 2] ml/preprocess.py → ProcesadorDemanda
+         │  Features: Mes, DiaSemana, Categoria_Codificada
+         │  Target: DemandaTotal (suma diaria por categoría)
+         ▼
+         ml/train.py → EntrenadorDemanda(incluir_dl=False)
+         │  Modelos: RegresionLineal + BosqueAleatorio
+         ▼
+         ml/evaluate.py → EvaluadorModelos
+         │  Métricas: MAE, MSE, R² — selecciona mejor modelo
+         │  Salida: predicciones por categoría
+         ▼
+[FASE 3] ml/deep_learning.py → RedNeuronalDensa / RedLSTM
+         │  Redes neuronales MLP (sklearn) — confirmación de integración DL
+         ▼
+[FASE 4] nlp/summary_generator.py → generate_sales_summary()
+         │  nlp/sentiment.py → analyze_sentiment()  [requiere torch]
+         ▼
+[FASE 5] search_csp/agent.py → WarehouseEnvironment + InventoryAgent
+         │  search_csp/algorithm.py → a_star_search()
+         │  Top-3 categorías → rutas óptimas en grid 8×8
+         ▼
+[ÉTICA]  Análisis de fairness por género y edad (MAE diferencial)
+         │  Reporte: docs/ethics_analysis.md
+         ▼
+         Reporte ejecutivo final en consola
 ```
 
 ---
@@ -100,12 +131,11 @@ proyecto-final-ia/
 └── src/
     ├── data/
     │   └── load_data.py               ← carga y validación del CSV
-    ├── ml/
+    ├── ml/                            ← Módulos B y C
     │   ├── preprocess.py              ← preprocesamiento y feature engineering
-    │   ├── train.py                   ← entrenamiento de modelos supervisados
-    │   └── evaluate.py                ← métricas MAE, MSE, R²
-    ├── dl/
-    │   └── model.py                   ← (pendiente) red neuronal Módulo C
+    │   ├── train.py                   ← entrenamiento ML clásico + integración DL
+    │   ├── evaluate.py                ← métricas MAE, MSE, R²
+    │   └── deep_learning.py           ← Módulo C: RedNeuronalDensa, RedLSTM, Ensemble
     ├── search_csp/
     │   ├── agent.py                   ← WarehouseEnvironment e InventoryAgent
     │   └── algorithm.py               ← algoritmo A* con heurística Manhattan
@@ -126,11 +156,13 @@ proyecto-final-ia/
 
 ## Requisitos del Sistema
 
-- **Python:** 3.9 o superior
+- **Python:** 3.9 o superior (probado en Python 3.14)
 - **Sistema Operativo:** Windows 10/11, macOS 12+, Ubuntu 20.04+
 - **RAM mínima:** 4 GB (8 GB recomendado para el modelo BERT)
 - **Espacio en disco:** ~2 GB (incluyendo modelos de transformers)
 - **Conexión a internet:** requerida la primera vez (descarga del modelo BERT ~700 MB)
+
+> **Nota sobre Deep Learning (Módulo C):** El módulo usa `sklearn.neural_network.MLPRegressor` — no requiere TensorFlow ni PyTorch. Compatible con Python 3.14+.
 
 ---
 
@@ -167,14 +199,16 @@ El archivo `requirements.txt` debe contener:
 ```
 pandas>=2.0
 numpy>=1.24
-scikit-learn>=1.3
-transformers>=4.35
-torch>=2.0
+scikit-learn>=1.3      # cubre Módulos B y C (Deep Learning incluido)
+transformers>=4.35     # Módulo D — solo para análisis de sentimiento
+torch>=2.0             # Módulo D — opcional, usar --skip-nlp si no está disponible
 sentencepiece
 nltk
 fastapi
 uvicorn
 ```
+
+> `torch` y `transformers` son opcionales. Si no están instalados, ejecutar con `--skip-nlp`. El resto del pipeline (Módulos A, B, C, E) funciona sin ellos.
 
 ### Paso 4 — Descargar recursos NLTK
 
@@ -242,8 +276,9 @@ python src/integration/pipeline.py
 ─────────────────────────────────────────────────────────────────
   FASE 3/5 │ Predicción Deep Learning (Módulo C)
 ─────────────────────────────────────────────────────────────────
-  ⚠  Módulo C (src/dl/model.py) no encontrado — integración pendiente.
-  ► Pipeline continúa con predicciones del Módulo B como fallback.
+  ► Módulo C detectado (src/ml/deep_learning.py) — integración confirmada.
+    ✓ Clases disponibles: RedNeuronalDensa, RedLSTM, EnsembleRedNeuronal
+    ✓ Entrenamiento DL activo en Fase 2 vía EntrenadorDemanda(incluir_dl=True)
 
 ─────────────────────────────────────────────────────────────────
   FASE 4/5 │ Análisis NLP / LLM (Módulo D)
@@ -342,12 +377,16 @@ Pipeline completo de predicción de demanda con comparación de modelos supervis
 - **Target:** `DemandaTotal` — suma diaria de `Sales_Amount` por categoría
 - **Métricas:** MAE, MSE, R² — el modelo con menor MAE alimenta al Módulo A
 
-### Módulo C — Deep Learning (`src/dl/`)
+### Módulo C — Deep Learning (`src/ml/deep_learning.py`)
 
-Red neuronal para predicción avanzada de ventas (pendiente de integración).
+Redes neuronales para predicción avanzada de demanda. Integrado en `src/ml/` junto al pipeline ML.
 
-- **Interfaz esperada:** clase `DLPredictor` con método `predict() → dict`
-- El pipeline detecta automáticamente si el módulo está disponible y usa fallback ML si no
+- **`RedNeuronalDensa`:** MLP con capas `[128, 64, 32]`, activación relu, optimizador adam, early stopping
+- **`RedLSTM`:** MLP sobre ventana temporal de 7 días — simula predicción de series temporales
+- **`EnsembleRedNeuronal`:** combina ambas redes con pesos configurables (default 50/50)
+- **Backend:** `sklearn.neural_network.MLPRegressor` — compatible con Python 3.14+, sin TensorFlow
+- **Integración:** `EntrenadorDemanda(incluir_dl=True)` activa entrenamiento DL junto a modelos ML clásicos
+- El pipeline (Fase 3) confirma disponibilidad del módulo y sus clases en cada ejecución
 
 ### Módulo D — NLP / LLM (`src/nlp/`)
 
@@ -374,7 +413,7 @@ Orquesta el pipeline completo y evalúa la equidad del sistema sobre el dataset 
 |:-------------------|:------------------------------|:--------------------------------------|
 | Oscar Rivera       | A — Búsqueda A\*              | Python, heapq, grids                  |
 | José Avila         | B — Pipeline ML               | scikit-learn, pandas, numpy           |
-| Jonathan Guamuch   | C — Deep Learning             | PyTorch / TensorFlow                  |
+| Jonathan Guamuch   | C — Deep Learning             | sklearn MLPRegressor, numpy           |
 | Pablo Chavez       | D — NLP / LLM                 | transformers, BERT, FastAPI, NLTK     |
 | Emerson Sec        | E — Integración y Ética       | Python, pandas, análisis de fairness  |
 
@@ -406,9 +445,10 @@ Orquesta el pipeline completo y evalúa la equidad del sistema sobre el dataset 
 |:------|:------|:---------|
 | `ModuleNotFoundError: No module named 'transformers'` | torch/transformers no instalado | `pip install transformers torch` o usar `--skip-nlp` |
 | `FileNotFoundError: Retail_Sales_Data.csv` | CSV no está en la raíz | Descargar desde Kaggle y colocar en raíz del proyecto |
-| `ModuleNotFoundError: No module named 'dl'` | Módulo C no entregado aún | Normal — pipeline continúa con fallback ML |
+| `ModuleNotFoundError: No module named 'deep_learning'` | Import incorrecto (path relativo) | Verificar que `train.py` usa `from ml.deep_learning import ...` |
 | `LookupError: Resource punkt not found` | NLTK data no descargado | Ejecutar Paso 4 de instalación |
 | `CUDA out of memory` al cargar BERT | GPU sin memoria suficiente | Agregar `device=-1` al `pipeline()` en `sentiment.py` para forzar CPU |
+| `No matching distribution found for tensorflow` | TensorFlow no soporta Python 3.14+ | Módulo C usa sklearn — no necesita TensorFlow |
 
 ---
 
