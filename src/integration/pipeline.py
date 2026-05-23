@@ -55,7 +55,7 @@ CATEGORY_LOCATIONS = {
 
 WAREHOUSE_ENTRY = (7, 0)  # Muelle de carga / punto de inicio
 
-FEATURES = ["Mes", "DiaSemana", "Categoria_Codificada"]
+FEATURES = ["Mes", "SemanaDelAno", "Categoria_Codificada"]
 TARGET = "DemandaTotal"
 
 
@@ -173,18 +173,34 @@ def fase_ml(datos: pd.DataFrame):
     print()
     print(f"    {'Modelo':<26} {'MAE':>10} {'MSE':>16} {'R²':>8}")
     print(f"    {'─' * 63}")
-    mejor_nombre, mejor_mae = None, float("inf")
+    mejor_nombre, mejor_r2 = None, float("-inf")
     for nombre, m in metricas.items():
         print(f"    {nombre:<26} {m['MAE']:>10.2f} {m['MSE']:>16.2f} {m['R2']:>8.4f}")
-        if m["MAE"] < mejor_mae:
-            mejor_mae, mejor_nombre = m["MAE"], nombre
+        if m["R2"] > mejor_r2:
+            mejor_r2, mejor_nombre = m["R2"], nombre
     print()
-    ok(f"Mejor modelo seleccionado: {mejor_nombre}  (MAE = {mejor_mae:.2f})")
+    ok(f"Mejor modelo seleccionado: {mejor_nombre}  (R² = {mejor_r2:.4f})")
+
+    # Validación cruzada 5-fold
+    step("Ejecutando validación cruzada 5-fold...")
+    try:
+        cv_resultados = entrenador.validar_cruzado(k=5)
+        print()
+        print(f"    {'Modelo':<26} {'R² Prom':>10} {'±':>6} {'MAE Prom':>12} {'±':>8}")
+        print(f"    {'─' * 66}")
+        for nombre, cv in cv_resultados.items():
+            print(f"    {nombre:<26} {cv['R2_promedio']:>10.4f} {cv['R2_std']:>6.4f} "
+                  f"{cv['MAE_promedio']:>12.2f} {cv['MAE_std']:>8.2f}")
+        print()
+        ok("Validación cruzada completada")
+    except Exception as e:
+        warn(f"Error en validación cruzada: {e}")
 
     # Predicciones por categoría para informar al Módulo A
-    step("Generando predicciones de demanda por categoría (viernes del último mes)...")
+    step("Generando predicciones de demanda por categoría (última semana del dataset)...")
     modelo_rf = modelos[mejor_nombre]
     ultimo_mes = int(datos_proc["Mes"].max())
+    ultima_semana = int(datos_proc["SemanaDelAno"].max())
     categorias_unicas = datos_proc["Product_Category"].unique()
 
     predicciones = {}
@@ -192,7 +208,7 @@ def fase_ml(datos: pd.DataFrame):
     for cat in categorias_unicas:
         try:
             cod = procesador.codificador.transform([cat])[0]
-            val = modelo_rf.predict([[ultimo_mes, 4, cod]])[0]  # 4 = viernes
+            val = modelo_rf.predict([[ultimo_mes, ultima_semana, cod]])[0]
             predicciones[cat] = max(0.0, float(val))
         except Exception:
             errores_prediccion.append(cat)

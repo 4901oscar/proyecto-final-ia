@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, cross_val_score, KFold
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
 try:
@@ -75,6 +75,21 @@ class EntrenadorDemanda:
             
         return modelos_entrenados, self.X_prueba, self.y_prueba
     
+    def validar_cruzado(self, k: int = 5) -> dict:
+        """Validación cruzada k-fold sobre los modelos ML base."""
+        kf = KFold(n_splits=k, shuffle=True, random_state=42)
+        resultados = {}
+        for nombre, modelo in self.modelos_ml.items():
+            r2_scores = cross_val_score(modelo, self.X, self.y, cv=kf, scoring='r2')
+            mae_scores = -cross_val_score(modelo, self.X, self.y, cv=kf, scoring='neg_mean_absolute_error')
+            resultados[nombre] = {
+                'R2_promedio': round(r2_scores.mean(), 4),
+                'R2_std':      round(r2_scores.std(),  4),
+                'MAE_promedio': round(mae_scores.mean(), 2),
+                'MAE_std':      round(mae_scores.std(),  2),
+            }
+        return resultados
+
     def obtener_predicciones_dl(self, modelos_dl: dict, secuencias_lstm=None):
         """Obtiene predicciones de modelos DL"""
         predicciones = {}
