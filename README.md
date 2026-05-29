@@ -368,6 +368,12 @@ Implementa el algoritmo A\* para encontrar la ruta óptima de recolección en un
 - **Entrada:** Grid binario (0 = pasillo, 1 = estantería), posición inicial, posición objetivo
 - **Salida:** Lista de coordenadas `(x, y)` que forman la ruta óptima, o `None` si no existe
 
+Nota de integración adicional:
+- El módulo `search_csp` consume las predicciones de demanda que le entrega el pipeline. Por defecto
+  estas predicciones proceden del Módulo B (ML), pero el pipeline ahora puede preferir predicciones
+  generadas por el Módulo C (Deep Learning) cuando esté disponible; en ese caso `search_csp` usará
+  las predicciones DL como entrada para priorizar paradas. Ver `src/integration/pipeline.py`.
+
 ### Módulo B — Machine Learning (`src/ml/`)
 
 Pipeline completo de predicción de demanda con comparación de modelos supervisados.

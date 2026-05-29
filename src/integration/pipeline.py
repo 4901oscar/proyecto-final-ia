@@ -154,7 +154,7 @@ def fase_ml(datos: pd.DataFrame):
     step("Entrenando modelos supervisados (RegresionLineal + BosqueAleatorio)...")
     try:
         entrenador = EntrenadorDemanda(datos_proc, FEATURES, TARGET)
-        modelos, X_test, y_test = entrenador.generar_modelos_entrenados(incluir_dl=False)
+        modelos, X_test, y_test = entrenador.generar_modelos_entrenados(incluir_dl=True)
     except Exception as e:
         fail(f"Error en entrenamiento: {e}")
         sys.exit(1)
@@ -228,19 +228,59 @@ def fase_ml(datos: pd.DataFrame):
 # ═══════════════════════════════════════════════════════════════════════════════
 # FASE 3 — Predicción Deep Learning (Módulo C)
 # ═══════════════════════════════════════════════════════════════════════════════
-def fase_dl():
+def fase_dl(modelos: dict, procesador, datos_proc: pd.DataFrame):
     header("FASE 3/5 │ Predicción Deep Learning (Módulo C)")
 
     try:
-        from ml.deep_learning import RedNeuronalDensa
+        from ml.deep_learning import RedNeuronalDensa, RedLSTM, EnsembleRedNeuronal
 
         step("Módulo C detectado (src/ml/deep_learning.py) — integración confirmada.")
         ok("Clases disponibles: RedNeuronalDensa, RedLSTM, EnsembleRedNeuronal")
-        ok("Entrenamiento DL activo en Fase 2 vía EntrenadorDemanda(incluir_dl=True)")
-        return {"modulo": "deep_learning", "clases": ["RedNeuronalDensa", "RedLSTM", "EnsembleRedNeuronal"]}
 
-    except ImportError:
-        warn("Módulo C (src/ml/deep_learning.py) no disponible — requiere tensorflow.")
+        # Construir predicciones por categoría usando modelos DL si existen
+        clases_dl = [k for k in modelos.keys() if k in ("RedNeuronalDensa", "RedLSTM", "EnsembleRedNeuronal")]
+        predicciones_dl = {}
+
+        if not clases_dl:
+            step("No se detectaron modelos DL entrenados en 'modelos'. Usando fallback ML.")
+            return {"modulo": "deep_learning", "clases": [], "predicciones": None}
+
+        ultimo_mes = int(datos_proc["Mes"].max())
+        categorias_unicas = datos_proc["Product_Category"].unique()
+
+        for cat in categorias_unicas:
+            try:
+                cod = procesador.codificador.transform([cat])[0]
+                X_row = pd.DataFrame([[ultimo_mes, 4, cod]], columns=FEATURES)
+
+                # Preferir ensemble > red densa > red lstm
+                val = None
+                if "EnsembleRedNeuronal" in modelos:
+                    ensemble = modelos["EnsembleRedNeuronal"]
+                    val_arr = ensemble.predecir_ensemble(X_row)
+                    val = float(val_arr[0]) if hasattr(val_arr, "__len__") else float(val_arr)
+                elif "RedNeuronalDensa" in modelos:
+                    rd = modelos["RedNeuronalDensa"]
+                    val = float(rd.predecir(X_row)[0])
+                elif "RedLSTM" in modelos:
+                    # RedLSTM espera secuencias; intentar usar si expone método directo
+                    rl = modelos["RedLSTM"]
+                    try:
+                        val = float(rl.predecir(X_row).flatten()[0])
+                    except Exception:
+                        val = None
+
+                if val is not None:
+                    predicciones_dl[cat] = max(0.0, float(val))
+
+            except Exception as e:
+                warn(f"No se pudo predecir DL para '{cat}': {e}")
+
+        ok(f"Predicciones DL generadas para {len(predicciones_dl)} categorías")
+        return {"modulo": "deep_learning", "clases": clases_dl, "predicciones": predicciones_dl}
+
+    except ImportError as e:
+        warn(f"Módulo C (src/ml/deep_learning.py) no disponible: {e}")
         step("Pipeline continúa con predicciones del Módulo B como fallback.")
         return None
     except Exception as e:
@@ -326,7 +366,7 @@ def fase_nlp(predicciones: dict, skip_nlp: bool = False):
 # ═══════════════════════════════════════════════════════════════════════════════
 # FASE 5 — Optimización de Rutas A* (Módulo A)
 # ═══════════════════════════════════════════════════════════════════════════════
-def fase_astar(predicciones: dict):
+def fase_astar(predicciones: dict, dl_result=None):
     header("FASE 5/5 │ Optimización de Rutas A* (Módulo A)")
 
     try:
@@ -337,7 +377,11 @@ def fase_astar(predicciones: dict):
         return []
 
     # Seleccionar top-3 categorías por demanda predicha para reabastecer
-    top3 = sorted(predicciones.items(), key=lambda x: x[1], reverse=True)[:3]
+    effective_predicciones = predicciones
+    if dl_result and isinstance(dl_result, dict) and dl_result.get("predicciones"):
+        effective_predicciones = dl_result.get("predicciones")
+
+    top3 = sorted(effective_predicciones.items(), key=lambda x: x[1], reverse=True)[:3]
 
     step("Top 3 categorías priorizadas para reabastecimiento:")
     for i, (cat, dem) in enumerate(top3, 1):
@@ -543,11 +587,11 @@ def main():
 
     modelos, mejor_nombre, metricas, datos_proc, predicciones, procesador = fase_ml(datos_raw)
 
-    dl_result = fase_dl()
+    dl_result = fase_dl(modelos, procesador, datos_proc)
 
     nlp_results = fase_nlp(predicciones, skip_nlp=args.skip_nlp)
 
-    rutas = fase_astar(predicciones)
+    rutas = fase_astar(predicciones, dl_result)
 
     analizar_sesgos(datos_completos, modelos, mejor_nombre, datos_proc, predicciones)
 
